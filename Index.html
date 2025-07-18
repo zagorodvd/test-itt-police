@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тестування на знання наказу МВС № 777</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .quiz-option {
+            transition: all 0.2s ease-in-out;
+        }
+        .quiz-option:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .selected {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        .correct {
+            border-color: #22c55e;
+            background-color: #f0fdf4;
+        }
+        .incorrect {
+            border-color: #ef4444;
+            background-color: #fef2f2;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 flex items-center justify-center min-h-screen p-4">
+    <div id="quiz-container" class="w-full max-w-2xl bg-white p-6 sm:p-8 rounded-2xl shadow-lg">
+        <div id="start-screen">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Тестування на знання наказу МВС № 777</h1>
+            <p class="text-gray-600 mb-6">Тест для перевірки знань вимог інструкцій і правил, затверджених наказом МВС України від 25.09.2023 № 777, щодо діяльності ІТТ.</p>
+            <button id="start-btn" class="w-full bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                Почати тестування
+            </button>
+        </div>
+
+        <div id="question-screen" class="hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-900" id="question-title"></h2>
+                <span class="text-sm font-medium text-gray-500" id="question-counter"></span>
+            </div>
+            <p class="text-lg text-gray-700 mb-6" id="question-text"></p>
+            <div id="options-container" class="space-y-4"></div>
+            <div class="mt-8 flex justify-end">
+                <button id="next-btn" class="bg-blue-600 text-white font-semibold py-2 px-8 rounded-lg hover:bg-blue-700 transition-colors duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                    Далі
+                </button>
+            </div>
+        </div>
+
+        <div id="result-screen" class="hidden">
+            <h1 class="text-3xl font-bold text-gray-900 mb-4 text-center">Результати тестування</h1>
+            <div class="bg-blue-50 p-6 rounded-xl text-center mb-6">
+                <p class="text-lg text-gray-700">Ваш результат:</p>
+                <p class="text-5xl font-extrabold text-blue-600 my-2" id="score-text"></p>
+                <p class="text-base text-gray-600" id="score-percentage"></p>
+            </div>
+            <div class="text-center mb-6">
+                <p class="font-semibold text-gray-700">Примітка:</p>
+                <p class="text-sm text-gray-500">Ці результати відображаються тільки вам у цьому вікні браузера. Вони не зберігаються та нікуди не передаються.</p>
+            </div>
+            <div id="review-container" class="space-y-4"></div>
+             <div class="mt-8 flex justify-center">
+                <button id="restart-btn" class="bg-gray-200 text-gray-800 font-semibold py-3 px-6 rounded-lg hover:bg-gray-300 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400">
+                    Пройти тест ще раз
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const quizData = [
+            {
+                question: "Який максимальний строк тримання особи в ІТТ без ухвали слідчого судді, суду?",
+                options: ["72 години", "60 годин", "48 годин", "24 години"],
+                answer: "60 годин"
+            },
+            {
+                question: "Ким має здійснюватися особистий огляд доставленої в ІТТ особи?",
+                options: ["Працівником будь-якої статі", "Працівником однієї статі з особою, яка оглядається", "Черговим по ІТТ незалежно від статі", "Начальником ІТТ"],
+                answer: "Працівником однієї статі з особою, яка оглядається"
+            },
+            {
+                question: "Що є підставою для негайного звільнення особи, затриманої за підозрою у вчиненні кримінального правопорушення?",
+                options: ["Відмова особи від дачі показань", "Закінчення 60-годинного строку тримання", "Невручення письмового повідомлення про підозру протягом 24 годин з моменту затримання", "Скарги на умови тримання"],
+                answer: "Невручення письмового повідомлення про підозру протягом 24 годин з моменту затримання"
+            },
+            {
+                question: "Які вимоги до ведення записів у Книзі служби щодо оглядів камер?",
+                options: ["Записи можуть бути узагальненими, наприклад 'все в порядку'", "Запис повинен містити розгорнуте та конкретне фіксування фактичного стану", "Записи робляться лише при виявленні порушень", "Час проведення огляду можна не вказувати"],
+                answer: "Запис повинен містити розгорнуте та конкретне фіксування фактичного стану"
+            },
+            {
+                question: "Які дії персоналу ІТТ у разі виявлення у затриманого тілесних ушкоджень?",
+                options: ["Негайно викликати швидку медичну допомогу та повідомити прокурора", "Запропонувати затриманому написати пояснення", "Зафіксувати ушкодження в журналі без виклику медиків", "Ігнорувати, якщо ушкодження незначні"],
+                answer: "Негайно викликати швидку медичну допомогу та повідомити прокурора"
+            },
+            {
+                question: "Чи дозволяється затриманим користуватися мобільними телефонами в ІТТ?",
+                options: ["Так, з дозволу чергового", "Ні, мобільні телефони є забороненими предметами", "Так, але не більше 15 хвилин на добу", "Лише для дзвінка адвокату"],
+                answer: "Ні, мобільні телефони є забороненими предметами"
+            },
+            {
+                question: "Яка періодичність надання прогулянок утримуваним особам?",
+                options: ["Одна година через день", "Дві години щодня", "Щонайменше одна година щодня", "Прогулянки надаються лише за рішенням суду"],
+                answer: "Щонайменше одна година щодня"
+            },
+            {
+                question: "Який порядок дій з особистими речами та цінностями затриманої особи?",
+                options: ["Залишаються при затриманому в камері", "Передаються родичам без опису", "Вилучаються, вносяться до протоколу огляду, опечатуються та зберігаються у спеціальному приміщенні", "Викидаються, якщо не мають цінності"],
+                answer: "Вилучаються, вносяться до протоколу огляду, опечатуються та зберігаються у спеціальному приміщенні"
+            },
+            {
+                question: "Хто має право на безперешкодне відвідування ІТТ без спеціального дозволу?",
+                options: ["Лише адвокати та слідчі", "Журналісти з акредитацією", "Уповноважений Верховної Ради України з прав людини та визначені ним особи", "Родичі затриманих"],
+                answer: "Уповноважений Верховної Ради України з прав людини та визначені ним особи"
+            },
+            {
+                question: "Що передбачено для забезпечення харчування утримуваних осіб?",
+                options: ["Харчування надається лише за кошти утримуваних", "Дворазове харчування", "Триразове гаряче харчування за встановленими нормами", "Харчування не передбачено, лише передачі від родичів"],
+                answer: "Триразове гаряче харчування за встановленими нормами"
+            },
+            {
+                question: "Що забороняється застосовувати до утримуваних осіб?",
+                options: ["Дисциплінарні стягнення", "Катування, жорстоке, нелюдське або таке, що принижує гідність, поводження", "Обмеження у спілкуванні з адвокатом", "Все перераховане вище"],
+                answer: "Катування, жорстоке, нелюдське або таке, що принижує гідність, поводження"
+            },
+            {
+                question: "Яка процедура у разі раптового погіршення стану здоров'я утримуваної особи?",
+                options: ["Очікувати на плановий огляд лікаря", "Негайно надати домедичну допомогу та викликати бригаду екстреної медичної допомоги", "Надати ліки із загальної аптечки без огляду", "Запропонувати написати заяву на ім'я начальника ІТТ"],
+                answer: "Негайно надати домедичну допомогу та викликати бригаду екстреної медичної допомоги"
+            },
+            {
+                question: "Чи мають право утримувані особи на побачення з родичами?",
+                options: ["Ні, побачення в ІТТ заборонені", "Так, з письмового дозволу слідчого або суду", "Так, у будь-який час за їхнім бажанням", "Лише з адвокатом"],
+                answer: "Так, з письмового дозволу слідчого або суду"
+            },
+            {
+                question: "Дезінфекція камер проводиться:",
+                options: ["Щомісяця", "Щоквартально", "Після кожного звільнення утримуваної особи та згідно з графіком", "Лише при виявленні інфекційних захворювань"],
+                answer: "Після кожного звільнення утримуваної особи та згідно з графіком"
+            },
+            {
+                question: "Що входить в обов'язки постового режимного блоку?",
+                options: ["Проведення слідчих дій", "Нагляд за поведінкою утримуваних, контроль за дотриманням режиму, періодичний огляд камер", "Доставка харчування до камер", "Прийняття рішень про звільнення осіб"],
+                answer: "Нагляд за поведінкою утримуваних, контроль за дотриманням режиму, періодичний огляд камер"
+            }
+        ];
+
+        const startScreen = document.getElementById('start-screen');
+        const questionScreen = document.getElementById('question-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const startBtn = document.getElementById('start-btn');
+        const questionTitle = document.getElementById('question-title');
+        const questionCounter = document.getElementById('question-counter');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const nextBtn = document.getElementById('next-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const scoreText = document.getElementById('score-text');
+        const scorePercentage = document.getElementById('score-percentage');
+        const reviewContainer = document.getElementById('review-container');
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let userAnswers = [];
+        
+        startBtn.addEventListener('click', startQuiz);
+        nextBtn.addEventListener('click', nextQuestion);
+        restartBtn.addEventListener('click', startQuiz);
+
+        function startQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            userAnswers = [];
+            startScreen.classList.add('hidden');
+            resultScreen.classList.add('hidden');
+            questionScreen.classList.remove('hidden');
+            reviewContainer.innerHTML = '';
+            showQuestion();
+        }
+
+        function showQuestion() {
+            nextBtn.disabled = true;
+            const question = quizData[currentQuestionIndex];
+            questionTitle.textContent = `Питання ${currentQuestionIndex + 1}`;
+            questionCounter.textContent = `${currentQuestionIndex + 1}/${quizData.length}`;
+            questionText.textContent = question.question;
+            optionsContainer.innerHTML = '';
+
+            // Shuffle options
+            const shuffledOptions = [...question.options].sort(() => Math.random() - 0.5);
+
+            shuffledOptions.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.classList.add('w-full', 'text-left', 'p-4', 'border-2', 'border-gray-300', 'rounded-lg', 'quiz-option');
+                button.onclick = () => selectOption(button, option);
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        function selectOption(button, selectedOption) {
+            const options = optionsContainer.querySelectorAll('button');
+            options.forEach(opt => opt.classList.remove('selected'));
+            button.classList.add('selected');
+            nextBtn.disabled = false;
+        }
+
+        function nextQuestion() {
+            const selectedButton = optionsContainer.querySelector('.selected');
+            if (!selectedButton) return;
+            
+            const selectedOption = selectedButton.textContent;
+            userAnswers[currentQuestionIndex] = selectedOption;
+
+            if (selectedOption === quizData[currentQuestionIndex].answer) {
+                score++;
+            }
+            
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizData.length) {
+                showQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            questionScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+            
+            scoreText.textContent = `${score} / ${quizData.length}`;
+            const percentage = ((score / quizData.length) * 100).toFixed(1);
+            scorePercentage.textContent = `Правильних відповідей: ${percentage}%`;
+
+            quizData.forEach((question, index) => {
+                const reviewBlock = document.createElement('div');
+                reviewBlock.classList.add('p-4', 'border', 'rounded-lg', 'mb-4');
+                
+                const questionP = document.createElement('p');
+                questionP.classList.add('font-semibold', 'mb-2');
+                questionP.textContent = `${index + 1}. ${question.question}`;
+                
+                const userAnswerP = document.createElement('p');
+                userAnswerP.classList.add('text-sm', 'mb-1');
+                const userAnswer = userAnswers[index];
+                userAnswerP.textContent = `Ваша відповідь: ${userAnswer}`;
+                
+                const correctAnswerP = document.createElement('p');
+                correctAnswerP.classList.add('text-sm', 'font-bold');
+                
+                if(userAnswer === question.answer) {
+                    reviewBlock.classList.add('bg-green-50', 'border-green-300');
+                    userAnswerP.classList.add('text-green-700');
+                } else {
+                    reviewBlock.classList.add('bg-red-50', 'border-red-300');
+                    userAnswerP.classList.add('text-red-700');
+                    correctAnswerP.textContent = `Правильна відповідь: ${question.answer}`;
+                    correctAnswerP.classList.add('text-green-800');
+                }
+
+                reviewBlock.appendChild(questionP);
+                reviewBlock.appendChild(userAnswerP);
+                if (correctAnswerP.textContent) {
+                    reviewBlock.appendChild(correctAnswerP);
+                }
+
+                reviewContainer.appendChild(reviewBlock);
+            });
+        }
+    </script>
+</body>
+</html>
